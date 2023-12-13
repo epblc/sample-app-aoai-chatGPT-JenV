@@ -95,7 +95,7 @@ const Chat = () => {
     const getUserInfoList = async () => {
         const userInfoList = await getUserInfo();
         if (userInfoList.length === 0 && window.location.hostname !== "127.0.0.1") {
-            setShowAuthMessage(true);
+            setShowAuthMessage(false);
         }
         else {
             setShowAuthMessage(false);
@@ -132,6 +132,12 @@ const Chat = () => {
         const abortController = new AbortController();
         abortFuncs.current.unshift(abortController);
 
+        //MGJ 05102023 toevoeging ikv selecteren bronnen
+        const urlParams = new URLSearchParams(window.location.search);
+        const sources = urlParams.get('bronnen');
+        
+        console.log("sources: "+ sources)
+
         const userMessage: ChatMessage = {
             id: uuid(),
             role: "user",
@@ -164,7 +170,8 @@ const Chat = () => {
         setMessages(conversation.messages)
         
         const request: ConversationRequest = {
-            messages: [...conversation.messages.filter((answer) => answer.role !== ERROR)]
+            messages: [...conversation.messages.filter((answer) => answer.role !== ERROR)],
+            sources: sources as string,
         };
 
         let result = {} as ChatResponse;
@@ -240,6 +247,10 @@ const Chat = () => {
         const abortController = new AbortController();
         abortFuncs.current.unshift(abortController);
 
+        //MGJ 05102023 toevoeging ikv selecteren bronnen
+        const urlParams = new URLSearchParams(window.location.search);
+        const sources = urlParams.get('bronnen');
+
         const userMessage: ChatMessage = {
             id: uuid(),
             role: "user",
@@ -261,16 +272,19 @@ const Chat = () => {
             }else{
                 conversation.messages.push(userMessage);
                 request = {
-                    messages: [...conversation.messages.filter((answer) => answer.role !== ERROR)]
+                    messages: [...conversation.messages.filter((answer) => answer.role !== ERROR)],
+                    sources: sources as string,
                 };
             }
         }else{
             request = {
-                messages: [userMessage].filter((answer) => answer.role !== ERROR)
+                messages: [userMessage].filter((answer) => answer.role !== ERROR),
+                sources: sources as string,
             };
             setMessages(request.messages)
         }
         let result = {} as ChatResponse;
+        console.log("request: " +request.sources as string)
         try {
             const response = conversationId ? await historyGenerate(request, abortController.signal, conversationId) : await historyGenerate(request, abortController.signal);
             if(!response?.ok){

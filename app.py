@@ -180,10 +180,29 @@ def generateFilterString(userToken):
     group_ids = ", ".join([obj['id'] for obj in userGroups])
     return f"{AZURE_SEARCH_PERMITTED_GROUPS_COLUMN}/any(g:search.in(g, '{group_ids}'))"
 
+def generateFilterSources(sources):
+    filter = ""
+    if sources != None or sources != "":
+        #filter = "bron eq ''"
+        values_list = sources.split(";")
+        i = 0
+        for value in values_list:
+            if i == 0:
+                filter = "bron eq '"+value+"' "
+            else:
+                filter = filter +"or bron eq '"+value+"' "
+            print(f"value: "+value)
+            print(f"filter: "+ filter)
+            i=i+1
+        print(f"totale filter: "+ filter)
 
+    #filter moet worden:
+    #bron eq 'LinkedIn' or bron eq 'OpenData'
+    return filter
 
 def prepare_body_headers_with_data(request):
     request_messages = request.json["messages"]
+    sources = request.json["sources"]
 
     body = {
         "messages": request_messages,
@@ -212,8 +231,12 @@ def prepare_body_headers_with_data(request):
                 logging.debug(f"USER TOKEN is {'present' if userToken else 'not present'}")
 
             filter = generateFilterString(userToken)
+
+            
             if DEBUG_LOGGING:
                 logging.debug(f"FILTER: {filter}")
+
+        filter = generateFilterSources(sources)
 
         body["dataSources"].append(
             {
